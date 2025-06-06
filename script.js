@@ -1,69 +1,84 @@
-// ====== Configuração do canvas para partículas ======
-const canvas = document.getElementById('background');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("background");
+const ctx = canvas.getContext("2d");
 
-let width, height;
-function resize() {
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+
+window.addEventListener("resize", () => {
   width = window.innerWidth;
   height = window.innerHeight;
   canvas.width = width;
   canvas.height = height;
+  initParticles();
+});
+
+let particles = [];
+const particleCount = 100;
+const maxDistance = 120;
+
+// Criação de partículas com posições e velocidades aleatórias
+function initParticles() {
+  particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
+      radius: Math.random() * 2 + 1
+    });
+  }
 }
-resize();
-window.addEventListener('resize', resize);
+initParticles();
 
-// Classe para cada partícula
-class Particle {
-  constructor() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.size = Math.random() * 3 + 1;
-    this.speedX = (Math.random() - 0.5) * 0.3;
-    this.speedY = (Math.random() - 0.7) * 0.5; // sobe mais que desce
-    this.opacity = Math.random() * 0.15 + 0.05;  // opacidade mais baixa
+// Animação
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+
+  // Conexões entre partículas próximas
+  for (let i = 0; i < particleCount; i++) {
+    for (let j = i + 1; j < particleCount; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < maxDistance) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(155, 89, 182, ${1 - dist / maxDistance})`;
+        ctx.lineWidth = 1;
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
   }
 
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
+  // Atualização e desenho das partículas
+  for (let p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
 
-    if (this.y < 0) this.y = height;
-    if (this.x > width) this.x = 0;
-    if (this.x < 0) this.x = width;
-  }
+    // Rebater nas bordas
+    if (p.x <= 0 || p.x >= width) p.vx *= -1;
+    if (p.y <= 0 || p.y >= height) p.vy *= -1;
 
-  draw() {
     ctx.beginPath();
-    ctx.fillStyle = `rgba(155, 89, 182, ${this.opacity})`; // roxo
-    ctx.shadowColor = 'rgba(155, 89, 182, 0.7)';
-    ctx.shadowBlur = 8;
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(155, 89, 182, 0.6)";
+    ctx.shadowColor = "rgba(155, 89, 182, 0.4)";
+    ctx.shadowBlur = 4;
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  requestAnimationFrame(animate);
 }
 
-// Criar e armazenar as partículas
-const particlesArray = [];
-const particlesCount = 100;
+animate();
 
-for (let i = 0; i < particlesCount; i++) {
-  particlesArray.push(new Particle());
-}
-
-// Loop de animação das partículas
-function animateParticles() {
-  ctx.clearRect(0, 0, width, height);
-  for (const p of particlesArray) {
-    p.update();
-    p.draw();
-  }
-  requestAnimationFrame(animateParticles);
-}
-
-animateParticles();
-
-// ====== Efeito de digitação ======
-const text = "Desenvolvedor de Softwares | Estudante De Informática";
+// ==== Efeito de digitação ====
+const text = "Futuro Desenvolvedor De Software| Estudante ";
 const typewriter = document.querySelector(".typewriter");
 let i = 0;
 
@@ -78,4 +93,3 @@ function type() {
 }
 
 type();
-
